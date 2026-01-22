@@ -1,8 +1,10 @@
 # NFCPassportReader
 
-This package handles reading an NFC Enabled passport using iOS 13 CoreNFC APIS
+This package handles reading an NFC Enabled passport using iOS 15 CoreNFC APIS
 
 **Version 2 (and the main branch) now uses Swift Async/Await for communication.  If you need an earlier version, please use 1.1.9 or below!**
+
+**NOTE: I shall continue to release updates through Cocoapods until it changes to read-only (end of 2026) however consider this deprecated and unsupported - please use Swift Package Manager**
 
 Supported features:
 * Basic Access Control (BAC)
@@ -25,7 +27,7 @@ It reads and verifies my passport (and others I've been able to test) fine, howe
 NFCPassportReader may be installed via Swift Package Manager, by pointing to this repo's URL.
 
 
-### CocoaPods (deprecated and unsupported)
+### CocoaPods **(deprecated and unsupported)**
 
 Install using [CocoaPods](http://cocoapods.org) by adding this line to your Podfile:
 
@@ -57,7 +59,7 @@ Passport number - 12345678
 Passport number checksum - 8
 Date Of birth - 980127
 Date of birth checksum - 7
-Expiry date - 250831
+Expiry date - 250830
 Expiry date checksum - 5
 
 mrzKey = "12345678898012772508315"
@@ -95,6 +97,11 @@ passportReader.readPassport(mrzKey: mrzKey, tags: [.COM, .DG1, .DG2],
 }
 ```
 
+Extended mode reads (not supported by all passports) can be enabled by passing in the useExtendedMode flag to the readPassport function.
+This will increase the number of bytes that can be read in a call and may be required for some passports that use long AA keys (some Australian passports for example).
+
+A custom Active Authentiion challenge can be provided to the PassportReader to ensure that the challenge/response was specifically executed in the session and not replayed. The app could then send the activeAuthenticationSignature to a backend, along with the rest of the chip data to perform validation.
+
 
 ## Logging
 Additional logging (very verbose)  can be enabled on the PassportReader by passing in a log level on creation:
@@ -105,6 +112,8 @@ let reader = PassportReader(logLevel: .debug)
 ```
 
 NOTE - currently this is just printing out to the console - I'd like to implement better logging later - probably using SwiftyBeaver 
+
+## Other info
 
 ### PassiveAuthentication
 Passive Authentication is now part of the main library and can be used to ensure that an E-Passport is valid and hasn't been tampered with.
