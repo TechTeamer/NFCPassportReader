@@ -74,6 +74,7 @@ public class PassportReader : NSObject {
     private var parserConfig : ParserConfig?
 // FACEKOM:: MODIFICATION END
     private var dataAmountToReadOverride : Int? = nil
+    private var aaChallenge: [UInt8]?
     
     private var scanCompletedHandler: ((NFCPassportModel?, NFCPassportReaderError?)->())!
     private var nfcViewDisplayMessageHandler: ((NFCViewDisplayMessage) -> String?)?
@@ -103,18 +104,19 @@ public class PassportReader : NSObject {
     }
     
 // FACEKOM:: MODIFICATION BEGIN
-    public func readPassport( mrzKey : String, tags : [DataGroupId] = [], parserConfig: ParserConfig? = nil, skipSecureElements : Bool = true, skipCA : Bool = false, skipPACE : Bool = false, useExtendedMode : Bool = false, customDisplayMessage : ((NFCViewDisplayMessage) -> String?)? = nil) async throws -> NFCPassportModel {
+    public func readPassport( mrzKey : String, tags : [DataGroupId] = [], aaChallenge: [UInt8]? = nil, parserConfig: ParserConfig? = nil, skipSecureElements : Bool = true, skipCA : Bool = false, skipPACE : Bool = false, useExtendedMode : Bool = false, customDisplayMessage : ((NFCViewDisplayMessage) -> String?)? = nil) async throws -> NFCPassportModel {
         let hash = calcSHA1Hash( [UInt8](mrzKey.data(using:.utf8)!) )
         //let subHash = Array(hash[0..<16])
         let bacHash = hash
-        return try await readPassport(bacHash: bacHash, tags: tags, parserConfig: parserConfig, skipSecureElements: skipSecureElements, skipCA: skipCA, skipPACE: skipPACE, useExtendedMode: useExtendedMode, customDisplayMessage: customDisplayMessage)
+        return try await readPassport(bacHash: bacHash, tags: tags, aaChallenge: aaChallenge, parserConfig: parserConfig, skipSecureElements: skipSecureElements, skipCA: skipCA, skipPACE: skipPACE, useExtendedMode: useExtendedMode, customDisplayMessage: customDisplayMessage)
     }
     
-    public func readPassport( bacHash: [UInt8], tags : [DataGroupId] = [], parserConfig: ParserConfig? = nil, skipSecureElements : Bool = true, skipCA : Bool = false, skipPACE : Bool = false, useExtendedMode : Bool = false, customDisplayMessage : ((NFCViewDisplayMessage) -> String?)? = nil) async throws -> NFCPassportModel {
+    public func readPassport( bacHash: [UInt8], tags : [DataGroupId] = [], aaChallenge: [UInt8]? = nil, parserConfig: ParserConfig? = nil, skipSecureElements : Bool = true, skipCA : Bool = false, skipPACE : Bool = false, useExtendedMode : Bool = false, customDisplayMessage : ((NFCViewDisplayMessage) -> String?)? = nil) async throws -> NFCPassportModel {
         
         self.passport = NFCPassportModel()
         self.bacHash = bacHash
         self.parserConfig = parserConfig
+        self.aaChallenge = aaChallenge
         self.skipCA = skipCA
         self.skipPACE = skipPACE
         self.useExtendedMode = useExtendedMode
