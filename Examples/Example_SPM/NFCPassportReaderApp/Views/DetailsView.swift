@@ -38,7 +38,7 @@ struct DetailsView : View {
     var body: some View {
         VStack {
             List {
-                ForEach( 0 ..< self.sectionNames.count ) { i in
+                ForEach( 0 ..< self.sectionNames.count, id: \.self) { i in
                     if self.sections[i].count > 0 {
                         SectionGroup(sectionTitle: self.sectionNames[i], items: self.sections[i])
                     }
@@ -66,7 +66,7 @@ struct DetailsView : View {
         if passport.isChipAuthenticationSupported {
             switch( passport.chipAuthenticationStatus ) {
                 case .notDone:
-                    chipAuth = "Supported - Not done"
+                    chipAuth = "Supported"
                 case .success:
                     chipAuth = "SUCCESS\nSignature verified"
                 case .failed:
@@ -86,7 +86,7 @@ struct DetailsView : View {
         if passport.isPACESupported {
             switch( passport.PACEStatus ) {
                 case .notDone:
-                    paceStatus = "Supported - Not done"
+                    paceStatus = "Supported"
                 case .success:
                     paceStatus = "SUCCESS"
                 case .failed:
@@ -150,10 +150,6 @@ struct DetailsView : View {
             } else if let pacei = secInfo as? PACEInfo {
                 title = "PACEInfo"
                 value = "\(pacei.getProtocolOIDString())\n\(pacei.getObjectIdentifier())\nParameter ID: \(pacei.getParameterId() ?? -1)"
-            } else if let activeAuthInfo = secInfo as? ActiveAuthenticationInfo {
-                title = "ActiveAuthenticationInfo"
-                value =
-                    "\(activeAuthInfo.getProtocolOIDString())\n\(activeAuthInfo.getSignatureAlgorithmOIDString() ?? "")"
             }
 
             items.append( Item(title:title, value: value))

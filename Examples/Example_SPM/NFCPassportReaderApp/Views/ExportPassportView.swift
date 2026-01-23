@@ -98,7 +98,7 @@ extension ExportPassportView {
                 .compactMap({$0})
                 .first?.windows
                 .filter({$0.isKeyWindow}).first
-            
+
             keyWindow?.rootViewController?.present(av, animated: true, completion: nil)
         } catch {
             print( "ERROR - \(error)" )

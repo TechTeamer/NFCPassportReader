@@ -12,31 +12,23 @@ import NFCPassportReader
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsStore
     
-    private var logLevels = ["Verbose", "Debug", "Info", "Warning", "Error"]
+    private var logLevels = ["Verbose", "Debug", "Info", "Warning", "Error", "None"]
 
     var body: some View {
         Form {
-            Section(header: Text("Logging settings")) {
-                Toggle(isOn: $settings.shouldCaptureLogs) {
-                    Text("Should capture logs")
-                }
-                
-                Picker(
-                    selection: $settings.logLevel,
-                    label: Text("Logging level")
-                ) {
-                    ForEach(LogLevel.allCases, id: \.self) {
-                        Text(logLevels[$0.rawValue] ).tag($0)
-                    }
-                }
-
-            }
-            
             Section(header: Text("Passport reading settings")) {
                 Toggle(isOn: $settings.useNewVerificationMethod) {
                     Text("Use new Passive Authentication")
                 }
-                .padding(.bottom)
+                Toggle(isOn: $settings.useExtendedMode) {
+                    Text("Use new Extended mode for reading")
+                }
+                Toggle(isOn: $settings.skipPACE) {
+                    Text("Skip PACE authentication - use BAC only")
+                }
+                Toggle(isOn: $settings.skipCA) {
+                    Text("Skip CA Authentication")
+                }
                 VStack {
                     Toggle(isOn: $settings.savePassportOnScan) {
                         Text("Save passport on scan & import")

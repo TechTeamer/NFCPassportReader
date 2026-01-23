@@ -10,6 +10,9 @@ import SwiftUI
 import Combine
 import NFCPassportReader
 import UniformTypeIdentifiers
+import MRZParser
+
+let appLogging = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "app")
 
 
 struct MainView : View {
@@ -24,6 +27,7 @@ struct MainView : View {
     @State private var showSettings : Bool = false
     @State private var showScanMRZ : Bool = false
     @State private var showSavedPassports : Bool = false
+    @State private var gettingLogs : Bool = false
 
     @State var page = 0
     
@@ -37,10 +41,13 @@ struct MainView : View {
                 NavigationLink( destination: SettingsView(), isActive: $showSettings) { Text("") }
                 NavigationLink( destination: PassportView(), isActive: $showDetails) { Text("") }
                 NavigationLink( destination: StoredPassportView(), isActive: $showSavedPassports) { Text("") }
-                NavigationLink( destination: MRZScanner(completionHandler:{ (nr,dob,doe) in
-                    settings.passportNumber = nr
-                    settings.dateOfBirth = dob
-                    settings.dateOfExpiry = doe
+                NavigationLink( destination: MRZScanner(completionHandler: { mrz in
+                    
+                    if let (docNr, dob, doe) = parse( mrz:mrz ) {
+                        settings.passportNumber = docNr
+                        settings.dateOfBirth = dob
+                        settings.dateOfExpiry = doe
+                    }
                     showScanMRZ = false
                 }).navigationTitle("Scan MRZ"), isActive: $showScanMRZ){ Text("") }
 
@@ -77,6 +84,25 @@ struct MainView : View {
                         .disabled( !isValid )
                     }
                 }
+                
+                if gettingLogs {
+                    VStack {
+                        VStack(alignment:.center) {
+                            Text( "Retrieving logs....." )
+                                .font(.title)
+                                .frame(maxWidth:.infinity, maxHeight:150)
+                        }
+                        .shadow(radius: 10)
+                        .background(.white)
+                        .cornerRadius(20) /// make the background rounded
+                        .overlay( /// apply a rounded border
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(.gray, lineWidth: 2)
+                        )
+                        .padding()
+                        Spacer()
+                    }
+                }
             }
             .navigationBarTitle("Passport details", displayMode: .automatic)
             .toolbar {
@@ -110,17 +136,36 @@ extension MainView {
         return settings.passportNumber.count >= 8
     }
 
+    func parse( mrz:String ) -> (String, Date, Date)? {
+        print( "mrz = \(mrz)")
+        
+        let parser = MRZParser(isOCRCorrectionEnabled: true)
+        if let result = parser.parse(mrzString: mrz),
+           let docNr = result.documentNumber,
+           let dob = result.birthdate,
+           let doe = result.expiryDate {
+            
+            return (docNr, dob, doe)
+        }
+        return nil
+    }
 }
 
 // MARK: Action Functions
 extension MainView {
 
     func shareLogs() {
-        hideKeyboard()
-        PassportUtils.shareLogs()
+        gettingLogs = true
+        Task {
+            hideKeyboard()
+            PassportUtils.shareLogs()
+            gettingLogs = false
+        }
     }
 
     func scanPassport( ) {
+        lastPassportScanTime = Date.now
+
         hideKeyboard()
         self.showDetails = false
         
@@ -131,6 +176,9 @@ extension MainView {
         let pptNr = settings.passportNumber
         let dob = df.string(from:settings.dateOfBirth)
         let doe = df.string(from:settings.dateOfExpiry)
+        let useExtendedMode = settings.useExtendedMode
+        let skipPACE = settings.skipPACE
+        let skipCA = settings.skipCA
 
         let passportUtils = PassportUtils()
         let mrzKey = passportUtils.getMRZKey( passportNumber: pptNr, dateOfBirth: dob, dateOfExpiry: doe)
@@ -141,10 +189,11 @@ extension MainView {
         
         // Set whether to use the new Passive Authentication verification method (default true) or the old OpenSSL CMS verifiction
         passportReader.passiveAuthenticationUsesOpenSSL = !settings.useNewVerificationMethod
-
+        
         // If we want to read only specific data groups we can using:
 //        let dataGroups : [DataGroupId] = [.COM, .SOD, .DG1, .DG2, .DG7, .DG11, .DG12, .DG14, .DG15]
 //        passportReader.readPassport(mrzKey: mrzKey, tags:dataGroups, completed: { (passport, error) in
+        
         
 // FACEKOM:: MODIFICATION BEGIN
 
@@ -163,6 +212,8 @@ extension MainView {
         
         Log.error( "Using version \(UIApplication.version)" )
         
+        appLogging.error( "Using version \(UIApplication.version)" )
+        
         Task {
             let customMessageHandler : (NFCViewDisplayMessage)->String? = { (displayMessage) in
                 switch displayMessage {
@@ -173,9 +224,13 @@ extension MainView {
                         return nil
                 }
             }
-
+            
             do {
-                let passport = try await passportReader.readPassport( mrzKey: mrzKey, parserConfig: parserCongig, customDisplayMessage:customMessageHandler)
+                let passport = try await passportReader.readPassport( mrzKey: mrzKey, skipCA: skipCA, skipPACE: skipPACE, useExtendedMode: useExtendedMode, customDisplayMessage:customMessageHandler)
+                
+                if let _ = passport.faceImageInfo {
+                    print( "Got face Image details")
+                }
                 
                 if settings.savePassportOnScan {
                     // Save passport
@@ -196,7 +251,7 @@ extension MainView {
                 self.alertTitle = "Oops"
                 self.alertTitle = error.localizedDescription
                 self.showingAlert = true
-                
+
             }
         }
     }

@@ -17,11 +17,12 @@ final class SettingsStore: ObservableObject {
         static let logLevel = "logLevel"
         static let useNewVerification = "useNewVerification"
         static let savePassportOnScan = "savePassportOnScan"
+        static let useExtendedMode = "useExtendedMode"
+        static let skipPACE = "skipPACE"
+        static let skipCA = "skipCA"
         static let passportNumber = "passportNumber"
         static let dateOfBirth = "dateOfBirth"
         static let dateOfExpiry = "dateOfExpiry"
-        
-        static let allVals = [captureLog, logLevel, useNewVerification, passportNumber, dateOfBirth, dateOfExpiry]
     }
     
     private let cancellable: Cancellable
@@ -38,6 +39,9 @@ final class SettingsStore: ObservableObject {
             Keys.logLevel: 1,
             Keys.useNewVerification: true,
             Keys.savePassportOnScan: false,
+            Keys.useExtendedMode: false,
+            Keys.skipPACE: false,
+            Keys.skipCA: false,
             Keys.passportNumber: "",
             Keys.dateOfBirth: Date().timeIntervalSince1970,
             Keys.dateOfExpiry: Date().timeIntervalSince1970,
@@ -60,15 +64,6 @@ final class SettingsStore: ObservableObject {
         get { defaults.bool(forKey: Keys.captureLog) }
     }
     
-    var logLevel: LogLevel {
-        get {
-            return LogLevel(rawValue:defaults.integer(forKey: Keys.logLevel)) ?? .info
-        }
-        set {
-            defaults.set(newValue.rawValue, forKey: Keys.logLevel)
-        }
-    }
-    
     var useNewVerificationMethod: Bool {
         set { defaults.set(newValue, forKey: Keys.useNewVerification) }
         get { defaults.bool(forKey: Keys.useNewVerification) }
@@ -77,6 +72,21 @@ final class SettingsStore: ObservableObject {
     var savePassportOnScan: Bool {
         set { defaults.set(newValue, forKey: Keys.savePassportOnScan) }
         get { defaults.bool(forKey: Keys.savePassportOnScan) }
+    }
+
+    var useExtendedMode: Bool {
+        set { defaults.set(newValue, forKey: Keys.useExtendedMode) }
+        get { defaults.bool(forKey: Keys.useExtendedMode) }
+    }
+
+    var skipPACE: Bool {
+        set { defaults.set(newValue, forKey: Keys.skipPACE) }
+        get { defaults.bool(forKey: Keys.skipPACE) }
+    }
+
+    var skipCA: Bool {
+        set { defaults.set(newValue, forKey: Keys.skipCA) }
+        get { defaults.bool(forKey: Keys.skipCA) }
     }
     
     var passportNumber: String {

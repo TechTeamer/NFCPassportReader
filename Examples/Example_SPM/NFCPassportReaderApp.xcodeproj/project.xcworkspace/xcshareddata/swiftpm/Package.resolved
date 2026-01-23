@@ -12,11 +12,11 @@
       },
       {
         "package": "OpenSSL",
-        "repositoryURL": "https://github.com/krzyzanowskim/OpenSSL.git",
+        "repositoryURL": "https://github.com/krzyzanowskim/OpenSSL-Package.git",
         "state": {
           "branch": null,
-          "revision": "8cb1d641ab5ebce2cd7cf31c93baef07bed672d4",
-          "version": "1.1.2301"
+          "revision": "71dbe0b4514cdaad95961470db72e8231f5943a6",
+          "version": "3.3.3001"
         }
       }
     ]
